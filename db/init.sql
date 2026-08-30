@@ -1,4 +1,4 @@
--- tablas bien basicas, sin foreign keys estrictas ni nada complicado
+-- tablas de la base de datos, idelamante crecerán
 
 CREATE TABLE nodos (
     id SERIAL PRIMARY KEY,
