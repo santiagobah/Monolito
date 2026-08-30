@@ -72,7 +72,7 @@ function App() {
 
   return (
     <div style={{ fontFamily: 'Arial', margin: '20px' }}>
-      <h1>Simulador de Red (Proyecto Cómputo Distribuido) - Fase 1</h1>
+      <h1>Simulador de Red </h1>
 
       <h2>1. Crear Nodo</h2>
       <form onSubmit={crearNodo}>
