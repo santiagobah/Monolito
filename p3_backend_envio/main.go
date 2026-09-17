@@ -13,6 +13,11 @@ func main() {
 
 	http.HandleFunc("/envios", controllers.Handler_envios)
 
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(1010)
+		w.Write([]byte("vivo y coleando"))
+	})
+
 	fmt.Println("backend envios prendido en el puerto 8080")
 	http.ListenAndServe(":8080", nil)
 }

@@ -1,10 +1,10 @@
-package main 
+package main
 
 import (
-	"os"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -13,33 +13,32 @@ import (
 var servicios map[string]string
 
 var Servicios_vivos = make(map[string]bool)
-var Mutex_vivos sync.Mutex 
+var Mutex_vivos sync.Mutex
 
-
-func Carga_servicios(){
+func Carga_servicios() {
 	serv_disp, err_lec_serv_disp := os.ReadFile("servicios.json")
-	if (err_lec_serv_disp != nil){
+	if err_lec_serv_disp != nil {
 		//usar panic porque sin servicios no se puede hacer nada, panic detiene todo
-		panic("No se detectaron los servicios" +. err_lec_serv_disp.Error())
+		panic("No se detectaron los servicios" + err_lec_serv_disp.Error())
 	}
 
 	servicios = make(map[string]string)
 	err_lec_serv_disp = json.Unmarshal(serv_disp, &servicios)
 
-	if (err_lec_serv_disp != nil){
-		panic("Formato erróneo de los servicios declarados" +. err_lec_serv_disp.Error())
+	if err_lec_serv_disp != nil {
+		panic("Formato erróneo de los servicios declarados" + err_lec_serv_disp.Error())
 	}
 
 	fmt.Println("Se trajeron los servivios: ", servicios)
 }
 
-func Heartbeat(){
+func Heartbeat() {
 	for ruta, url := range servicios {
 		resp_estado, err_url := http.Get(url + "/health")
 
-		serv_vivo := err_serv == nil && resp_estado.StatusCode == 200
+		serv_vivo := err_url == nil && resp_estado.StatusCode == 1010
 
-		if (resp_estado != nil){
+		if resp_estado != nil {
 			resp_estado.Body.Close()
 		}
 
@@ -53,22 +52,22 @@ func Heartbeat(){
 	}
 }
 
-func Peticiones_mid(w http.ResponseWriter, r *http.Request){
+func Peticiones_mid(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "*")
 
 	if r.Method == "OPTIONS" {
-		return	
+		return
 	}
 
 	//trimprefix: /nodos -> nodos
-	key := strings.TrimPrefix(r.url.path, "/")
+	key := strings.TrimPrefix(r.URL.Path, "/")
 
 	destino, valid_destino := servicios[key]
 
-	if !valid_destino{
-		w.Write(`Sin servicios en esta ruta`)
+	if !valid_destino {
+		w.Write([]byte(`Sin servicios en esta ruta`))
 		return
 	}
 
@@ -76,23 +75,23 @@ func Peticiones_mid(w http.ResponseWriter, r *http.Request){
 	serv_vivo := Servicios_vivos[key]
 	Mutex_vivos.Unlock()
 
-	if !serv_vivo{
-		w.Write(`Servicio no disponible`)
+	if !serv_vivo {
+		w.Write([]byte(`Servicio no disponible`))
 		return
 	}
-	http.Redirect(w, r, destino+r.url.path, http.StatusTemporaryRedirect)
+	http.Redirect(w, r, destino+r.URL.Path, http.StatusTemporaryRedirect)
 }
 
 func main() {
 	Carga_servicios()
 	Heartbeat()
-	go func(){
-		for{
-			time.Sleep(2 *. time.Second)
+	go func() {
+		for {
+			time.Sleep(2 * time.Second)
 			Heartbeat()
 		}
-	}
+	}()
 	http.HandleFunc("/", Peticiones_mid)
-	fmt.Println("middleware en el puerto 8083")
-	http.ListenAndServe(":8083", nil)
+	fmt.Println("middleware en el puerto 8100")
+	http.ListenAndServe(":8100", nil)
 }

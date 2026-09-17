@@ -1,4 +1,4 @@
-FROM golang:1.23.6
+FROM golang:1.25
 
 WORKDIR /app
 
@@ -10,6 +10,6 @@ RUN go mod tidy
 
 RUN go build -o middleware .
 
-EXPOSE 8083
+EXPOSE 8100
 
 CMD ["./middleware"]

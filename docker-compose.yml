@@ -1,27 +1,54 @@
-version: "3.8"
-
 services:
   db:
     image: postgres:15
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin123
-      POSTGRES_DB: redsim
+      POSTGRES_DB: minipackettracer
     ports:
       - "5432:5432"
-    volumes:
+    volumes: 
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
-
-  backend:
-    build: ./backend
-    ports:
-      - "8080:8080"
+  
+  nodos:
+    build: ./p1_backend_nodos
+    ports: 
+      - "8081:8080"
+    depends_on:
+      - db
+  
+  enlaces:
+    build: ./p2_backend_enlaces
+    ports: 
+      - "8082:8080"
     depends_on:
       - db
 
+  envios_1:
+    build: ./p3_backend_envio
+    ports:
+      - "8083:8080"
+    depends_on:
+      - db
+
+  envios_2:
+    build: ./p3_backend_envio
+    ports:
+      - "8084:8080"
+    depends_on:
+      - db
+
+  middleware:
+    build: ./middleware
+    ports:
+      - "8100:8100"
+    depends_on:
+      - envios_1
+      - envios_2
+  
   frontend:
     build: ./frontend
     ports:
       - "3000:3000"
     depends_on:
-      - backend
+      - middleware
