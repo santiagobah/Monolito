@@ -1,0 +1,5 @@
+{
+    "nodos": "http://localhost:8080",
+    "enlaces": "http://localhost:8081",
+    "envios": "http://localhost:8082"
+}
