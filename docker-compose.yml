@@ -20,28 +20,35 @@ services:
     ports: 
       - "8081:8080"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+
   
   enlaces:
     build: ./p2_backend_enlaces
     ports: 
       - "8082:8080"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+
 
   envios_1:
     build: ./p3_backend_envio
     ports:
       - "8083:8080"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+
 
   envios_2:
     build: ./p3_backend_envio
     ports:
       - "8084:8080"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   middleware:
     build: ./middleware

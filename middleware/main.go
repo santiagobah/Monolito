@@ -84,11 +84,11 @@ func Peticiones_mid(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	url_destino, _ := url.Parse(destino)
-	//gemini
-	// Creamos un proxy inverso que reenvía la petición internamente
+
+	// proxy inverso que reenvía la petición internamente
 	proxy := httputil.NewSingleHostReverseProxy(url_destino)
 
-	// Ejecutamos el proxy (el middleware hace la llamada y le devuelve la respuesta a React)
+	// proxy -> middleware hace la llamada y le manda la respuesta a React
 	proxy.ServeHTTP(w, r)
 }
 

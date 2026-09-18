@@ -3,29 +3,32 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 )
 
 var workers = []string{
-	"http://localhost:8091",
-	"http://localhost:8092",
+	"http://envios_1:8080",
+	"http://envios_2:8080",
 }
 
 var contador_uso_worker = 0
 
 func recibir_peticion(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "*")
-
 	if r.Method == "OPTIONS" {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "*")
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 
 	worker_destino := workers[contador_uso_worker%len(workers)]
 	contador_uso_worker++
 
-	http.Redirect(w, r, worker_destino+r.URL.Path, http.StatusTemporaryRedirect)
-
+	url_destino, _ := url.Parse(worker_destino)
+	proxy := httputil.NewSingleHostReverseProxy(url_destino)
+	proxy.ServeHTTP(w, r)
 }
 
 func main() {

@@ -1,5 +1,5 @@
 {
     "nodos": "http://nodos:8080",
     "enlaces": "http://enlaces:8080",
-    "envios": "http://envios_1:8080"
+    "envios": "http://loadbalancer:9100"
 }
