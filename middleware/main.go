@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -55,11 +57,11 @@ func Heartbeat() {
 }
 
 func Peticiones_mid(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "*")
-
 	if r.Method == "OPTIONS" {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "*")
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 
@@ -81,7 +83,13 @@ func Peticiones_mid(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(`Servicio no disponible`))
 		return
 	}
-	http.Redirect(w, r, destino+r.URL.Path, http.StatusTemporaryRedirect)
+	url_destino, _ := url.Parse(destino)
+	//gemini
+	// Creamos un proxy inverso que reenvía la petición internamente
+	proxy := httputil.NewSingleHostReverseProxy(url_destino)
+
+	// Ejecutamos el proxy (el middleware hace la llamada y le devuelve la respuesta a React)
+	proxy.ServeHTTP(w, r)
 }
 
 func main() {

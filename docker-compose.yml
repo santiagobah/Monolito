@@ -57,3 +57,12 @@ services:
       - "3000:3000"
     depends_on:
       - middleware
+
+  loadbalancer:
+    build: ./loadbalancer
+    ports:
+      - "9100:9100"
+    depends_on:
+      - envios_1
+      - envios_2
+    

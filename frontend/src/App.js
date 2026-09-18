@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-// url del backend. en la fase 2 esto cambia y apunta al middleware
-const API_URL = 'http://localhost:8080';
+const API_URL = 'http://localhost:8100';
 
 function App() {
   const [nodos, setNodos] = useState([]);
@@ -32,13 +31,13 @@ function App() {
     fetch(API_URL + '/nodos', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre, tipo, ip })
+      body: JSON.stringify({ name: nombre, type: tipo, ip })
     })
       .then(res => res.json())
       .then(() => {
         setNombre('');
         setIp('');
-        cargarNodos(); // recargamos todo, no es lo mas eficiente pero jala
+        cargarNodos(); // recargamos todo
       });
   }
 
@@ -57,7 +56,7 @@ function App() {
   function enviarPaquete(e) {
     e.preventDefault();
     setResultado(null);
-    fetch(API_URL + '/enviar', {
+    fetch(API_URL + '/envios', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -72,7 +71,7 @@ function App() {
 
   return (
     <div style={{ fontFamily: 'Arial', margin: '20px' }}>
-      <h1>Simulador de Red </h1>
+      <h1>Simulador de Red</h1>
 
       <h2>1. Crear Nodo</h2>
       <form onSubmit={crearNodo}>
@@ -90,7 +89,7 @@ function App() {
       <h2>2. Nodos registrados</h2>
       <ul>
         {nodos.map(n => (
-          <li key={n.id}>#{n.id} - {n.nombre} ({n.tipo}) {n.ip}</li>
+          <li key={n.id}>#{n.id} - {n.name} ({n.type}) {n.ip}</li>
         ))}
       </ul>
 
@@ -98,11 +97,11 @@ function App() {
       <form onSubmit={crearEnlace}>
         <select value={origenEnlace} onChange={e => setOrigenEnlace(e.target.value)} required>
           <option value="">-- origen --</option>
-          {nodos.map(n => <option key={n.id} value={n.id}>{n.nombre}</option>)}
+          {nodos.map(n => <option key={n.id} value={n.id}>{n.name}</option>)}
         </select>
         <select value={destinoEnlace} onChange={e => setDestinoEnlace(e.target.value)} required>
           <option value="">-- destino --</option>
-          {nodos.map(n => <option key={n.id} value={n.id}>{n.nombre}</option>)}
+          {nodos.map(n => <option key={n.id} value={n.id}>{n.name}</option>)}
         </select>
         <button type="submit">Conectar</button>
       </form>
@@ -111,11 +110,11 @@ function App() {
       <form onSubmit={enviarPaquete}>
         <select value={origenPaquete} onChange={e => setOrigenPaquete(e.target.value)} required>
           <option value="">-- origen --</option>
-          {nodos.map(n => <option key={n.id} value={n.id}>{n.nombre}</option>)}
+          {nodos.map(n => <option key={n.id} value={n.id}>{n.name}</option>)}
         </select>
         <select value={destinoPaquete} onChange={e => setDestinoPaquete(e.target.value)} required>
           <option value="">-- destino --</option>
-          {nodos.map(n => <option key={n.id} value={n.id}>{n.nombre}</option>)}
+          {nodos.map(n => <option key={n.id} value={n.id}>{n.name}</option>)}
         </select>
         <button type="submit">Simular Envío</button>
       </form>
