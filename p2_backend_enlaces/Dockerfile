@@ -6,8 +6,8 @@ COPY . .
 
 RUN go mod download
 
-RUN go build -o /nodos
+RUN go build -o /enlaces
 
 EXPOSE 8080
 
-CMD ["./enlaces"]
+CMD ["/enlaces"]

@@ -1,6 +1,5 @@
-module nodos 
+module nodos
 
-go 1.23.6
+go 1.25
 
-require github.com/jackc/pgx/v5 v5.11.0
-
+require github.com/lib/pq v1.12.3

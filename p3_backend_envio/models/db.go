@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+
+	_ "github.com/lib/pq"
 )
 
 var DB *sql.DB
@@ -19,7 +21,7 @@ func Conectar_db() {
 		host, port, user, password, dbname)
 
 	var err error
-	DB, err = sql.Open("pgx", psqlInfo)
+	DB, err = sql.Open("postgres", psqlInfo)
 	if err != nil {
 		log.Fatal("no se pudo establecer la conexión: ", err)
 	}

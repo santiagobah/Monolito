@@ -10,4 +10,4 @@ RUN go build -o /nodos
 
 EXPOSE 8080
 
-CMD ["./nodos"]
+CMD ["/nodos"]

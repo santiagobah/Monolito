@@ -14,7 +14,7 @@ func main() {
 	http.HandleFunc("/nodos", controllers.Handler_nodos)
 
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(1010)
+		w.WriteHeader(200)
 		w.Write([]byte("vivo y coleando"))
 	})
 

@@ -36,7 +36,7 @@ func Heartbeat() {
 	for ruta, url := range servicios {
 		resp_estado, err_url := http.Get(url + "/health")
 
-		serv_vivo := err_url == nil && resp_estado.StatusCode == 1010
+		serv_vivo := err_url == nil && resp_estado.StatusCode == 200
 
 		if resp_estado != nil {
 			resp_estado.Body.Close()
@@ -48,6 +48,8 @@ func Heartbeat() {
 
 		if !serv_vivo {
 			fmt.Println(ruta, " está muerto :( )")
+		} else {
+			fmt.Println(ruta, " está vivo y coleando")
 		}
 	}
 }

@@ -11,10 +11,10 @@ import (
 func main() {
 	models.Conectar_db()
 
-	http.HandleFunc("/nodos", controllers.Handler_enlaces)
+	http.HandleFunc("/enlaces", controllers.Handler_enlaces)
 
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(1010)
+		w.WriteHeader(200)
 		w.Write([]byte("vivo y coleando"))
 	})
 
