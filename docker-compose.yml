@@ -22,7 +22,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-
   
   enlaces:
     build: ./p2_backend_enlaces
@@ -32,7 +31,6 @@ services:
       db:
         condition: service_healthy
 
-
   envios_1:
     build: ./p3_backend_envio
     ports:
@@ -40,7 +38,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-
 
   envios_2:
     build: ./p3_backend_envio
@@ -50,11 +47,13 @@ services:
       db:
         condition: service_healthy
 
-  middleware:
-    build: ./middleware
+  nginx:
+    build: ./nginx
     ports:
-      - "8100:8100"
+      - "8000:8000"
     depends_on:
+      - nodos
+      - enlaces
       - envios_1
       - envios_2
   
@@ -63,13 +62,4 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - middleware
-
-  loadbalancer:
-    build: ./loadbalancer
-    ports:
-      - "9100:9100"
-    depends_on:
-      - envios_1
-      - envios_2
-    
+      - nginx

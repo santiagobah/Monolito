@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const API_URL = 'http://localhost:8100';
+const API_URL = 'http://localhost:8000';
 
 function App() {
   const [nodos, setNodos] = useState([]);
@@ -15,7 +15,6 @@ function App() {
   const [destinoPaquete, setDestinoPaquete] = useState('');
   const [resultado, setResultado] = useState(null);
 
-  // trae los nodos apenas carga la pagina
   useEffect(() => {
     cargarNodos();
   }, []);
@@ -37,7 +36,7 @@ function App() {
       .then(() => {
         setNombre('');
         setIp('');
-        cargarNodos(); // recargamos todo
+        cargarNodos();
       });
   }
 
