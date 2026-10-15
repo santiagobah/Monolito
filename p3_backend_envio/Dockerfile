@@ -1,13 +1,12 @@
-FROM golang:1.25.0
-
+FROM golang:alpine AS builder
 WORKDIR /app
-
-COPY . .
-
+COPY go.mod go.sum* ./
 RUN go mod download
+COPY . .
+RUN go build -o app .
 
-RUN go build -o /envios
-
+FROM alpine:latest
+WORKDIR /app
+COPY --from=builder /app/app .
 EXPOSE 8080
-
-CMD ["/envios"]
+CMD ["./app"]
