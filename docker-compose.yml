@@ -1,4 +1,11 @@
 services:
+  consul:
+    image: hashicorp/consul:latest
+    container_name: consul
+    command: "agent -dev -client=0.0.0.0 -ui"
+    ports:
+      - "8500:8500"
+
   db:
     image: postgres:15
     environment:
@@ -19,33 +26,76 @@ services:
     build: ./p1_backend_nodos
     ports: 
       - "8081:8080"
+    environment:
+      - INSTANCE_ID=nodos
+      - CONSUL_HTTP_ADDR=http://consul:8500
     depends_on:
       db:
         condition: service_healthy
+      consul:
+        condition: service_started
   
   enlaces:
     build: ./p2_backend_enlaces
     ports: 
       - "8082:8080"
+    environment:
+      - INSTANCE_ID=enlaces
+      - CONSUL_HTTP_ADDR=http://consul:8500
     depends_on:
       db:
         condition: service_healthy
+      consul:
+        condition: service_started
 
   envios_1:
     build: ./p3_backend_envio
     ports:
       - "8083:8080"
+    environment:
+      - INSTANCE_ID=envios_1
+      - CONSUL_HTTP_ADDR=http://consul:8500
     depends_on:
       db:
         condition: service_healthy
+      consul:
+        condition: service_started
 
   envios_2:
     build: ./p3_backend_envio
     ports:
       - "8084:8080"
+    environment:
+      - INSTANCE_ID=envios_2
+      - CONSUL_HTTP_ADDR=http://consul:8500
     depends_on:
       db:
         condition: service_healthy
+      consul:
+        condition: service_started
+
+  loadbalancer:
+    build: ./loadbalancer
+    ports:
+      - "9100:9100"
+    environment:
+      - CONSUL_HTTP_ADDR=http://consul:8500
+    depends_on:
+      - consul
+      - envios_1
+      - envios_2
+
+  middleware:
+    build: ./middleware
+    ports:
+      - "8100:8100"
+    environment:
+      - CONSUL_HTTP_ADDR=http://consul:8500
+    depends_on:
+      - consul
+      - nodos
+      - enlaces
+      - loadbalancer
 
   nginx:
     build: ./nginx

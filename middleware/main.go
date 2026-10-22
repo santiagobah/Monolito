@@ -12,48 +12,87 @@ import (
 	"time"
 )
 
-var servicios map[string]string
+type consulServiceEntry struct {
+	Service struct {
+		Service string `json:"Service"`
+		Address string `json:"Address"`
+		Port    int    `json:"Port"`
+	} `json:"Service"`
+}
 
-var Servicios_vivos = make(map[string]bool)
-var Mutex_vivos sync.Mutex
+var (
+	serviciosMapa map[string]string
+	consulAddr    string
+	mutexVivos    sync.RWMutex
+	backendsMap   = make(map[string][]*url.URL)
+)
+
+func getEnv(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
+}
+
+func queryConsulService(service string) ([]*url.URL, error) {
+	reqURL := fmt.Sprintf("%s/v1/health/service/%s?passing=true", consulAddr, service)
+	client := http.Client{Timeout: 3 * time.Second}
+	resp, err := client.Get(reqURL)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var entries []consulServiceEntry
+	if err := json.NewDecoder(resp.Body).Decode(&entries); err != nil {
+		return nil, err
+	}
+
+	var targets []*url.URL
+	for _, e := range entries {
+		u, err := url.Parse(fmt.Sprintf("http://%s:%d", e.Service.Address, e.Service.Port))
+		if err == nil {
+			targets = append(targets, u)
+		}
+	}
+	return targets, nil
+}
+
+func RefreshConsulDiscovery() {
+	serviciosConsul := []string{"nodos", "enlaces", "envios"}
+	for _, srv := range serviciosConsul {
+		urls, err := queryConsulService(srv)
+		if err == nil && len(urls) > 0 {
+			mutexVivos.Lock()
+			backendsMap[srv] = urls
+			mutexVivos.Unlock()
+		} else {
+			if fallback, ok := serviciosMapa[srv]; ok {
+				u, err := url.Parse(fallback)
+				if err == nil {
+					mutexVivos.Lock()
+					backendsMap[srv] = []*url.URL{u}
+					mutexVivos.Unlock()
+				}
+			}
+		}
+	}
+}
 
 func Carga_servicios() {
 	serv_disp, err_lec_serv_disp := os.ReadFile("servicios.json")
 	if err_lec_serv_disp != nil {
-		//usar panic porque sin servicios no se puede hacer nada, panic detiene todo
 		panic("No se detectaron los servicios" + err_lec_serv_disp.Error())
 	}
 
-	servicios = make(map[string]string)
-	err_lec_serv_disp = json.Unmarshal(serv_disp, &servicios)
+	serviciosMapa = make(map[string]string)
+	err_lec_serv_disp = json.Unmarshal(serv_disp, &serviciosMapa)
 
 	if err_lec_serv_disp != nil {
 		panic("Formato erróneo de los servicios declarados" + err_lec_serv_disp.Error())
 	}
 
-	fmt.Println("Se trajeron los servivios: ", servicios)
-}
-
-func Heartbeat() {
-	for ruta, url := range servicios {
-		resp_estado, err_url := http.Get(url + "/health")
-
-		serv_vivo := err_url == nil && resp_estado.StatusCode == 200
-
-		if resp_estado != nil {
-			resp_estado.Body.Close()
-		}
-
-		Mutex_vivos.Lock()
-		Servicios_vivos[ruta] = serv_vivo
-		Mutex_vivos.Unlock()
-
-		if !serv_vivo {
-			fmt.Println(ruta, " está muerto :( )")
-		} else {
-			fmt.Println(ruta, " está vivo y coleando")
-		}
-	}
+	fmt.Println("Se trajeron los servivios: ", serviciosMapa)
 }
 
 func Peticiones_mid(w http.ResponseWriter, r *http.Request) {
@@ -65,42 +104,38 @@ func Peticiones_mid(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//trimprefix: /nodos -> nodos
 	key := strings.TrimPrefix(r.URL.Path, "/")
-
-	destino, valid_destino := servicios[key]
-
-	if !valid_destino {
-		w.Write([]byte(`Sin servicios en esta ruta`))
-		return
+	parts := strings.Split(key, "/")
+	if len(parts) > 0 {
+		key = parts[0]
 	}
 
-	Mutex_vivos.Lock()
-	serv_vivo := Servicios_vivos[key]
-	Mutex_vivos.Unlock()
+	mutexVivos.RLock()
+	targets, ok := backendsMap[key]
+	mutexVivos.RUnlock()
 
-	if !serv_vivo {
+	if !ok || len(targets) == 0 {
 		w.Write([]byte(`Servicio no disponible`))
 		return
 	}
-	url_destino, _ := url.Parse(destino)
 
-	// proxy inverso que reenvía la petición internamente
-	proxy := httputil.NewSingleHostReverseProxy(url_destino)
-
-	// proxy -> middleware hace la llamada y le manda la respuesta a React
+	urlDestino := targets[0]
+	proxy := httputil.NewSingleHostReverseProxy(urlDestino)
 	proxy.ServeHTTP(w, r)
 }
 
 func main() {
+	consulAddr = getEnv("CONSUL_HTTP_ADDR", "http://consul:8500")
 	Carga_servicios()
-	Heartbeat()
+	RefreshConsulDiscovery()
+
 	go func() {
 		for {
-			time.Sleep(2 * time.Second)
-			Heartbeat()
+			time.Sleep(5 * time.Second)
+			RefreshConsulDiscovery()
 		}
 	}()
+
 	http.HandleFunc("/", Peticiones_mid)
 	fmt.Println("middleware en el puerto 8100")
 	http.ListenAndServe(":8100", nil)
