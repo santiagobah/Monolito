@@ -10,6 +10,10 @@ func Crear_enlace(e Enlace) (int, error) {
 	var id_v int
 	query := "INSERT INTO enlaces (nodo_origen_id, nodo_destino_id) VALUES ($1, $2) RETURNING id"
 	err_crecion_enlace := DB.QueryRow(query, e.Nodo_origen_id, e.Nodo_destino_id).Scan(&id_v)
+	if err_crecion_enlace == nil {
+		e.Id = id_v
+		go PublicarEnlaceCreado(e)
+	}
 	return id_v, err_crecion_enlace
 }
 

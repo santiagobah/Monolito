@@ -126,6 +126,8 @@ func Envio_paquetes(n_origen, n_destino int) (Paquete, error) {
 
 	paq_final := Paquete{Id: id_e, Origen: n_origen, Destino: n_destino, Ruta: ruta_string}
 
+	go PublicarEnvioCreado(paq_final)
+
 	return paq_final, nil
 
 }

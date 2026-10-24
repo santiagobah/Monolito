@@ -84,6 +84,7 @@ func deregisterFromConsul(consulAddr string) {
 
 func main() {
 	models.Conectar_db()
+	models.InitKafka()
 
 	consulAddr := getEnv("CONSUL_HTTP_ADDR", "http://consul:8500")
 	if err := registerWithConsul(consulAddr); err != nil {
@@ -99,6 +100,11 @@ func main() {
 
 	srv := &http.Server{Addr: ":8080", Handler: mux}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go models.IniciarConsumidorKafka(ctx)
+
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
@@ -106,9 +112,13 @@ func main() {
 		instanceID := getEnv("INSTANCE_ID", "envios")
 		log.Printf("shutting down %s", instanceID)
 		deregisterFromConsul(consulAddr)
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		srv.Shutdown(ctx)
+		cancel()
+		if models.KafkaWriter != nil {
+			models.KafkaWriter.Close()
+		}
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer shutdownCancel()
+		srv.Shutdown(shutdownCtx)
 	}()
 
 	fmt.Println("backend envios prendido en el puerto 8080")

@@ -11,6 +11,10 @@ func Crear_nodo(n Nodo_n) (int, error) {
 	var Id_v int
 	query := "INSERT INTO nodos (nombre, tipo, ip) VALUES ($1, $2, $3) RETURNING id"
 	error_db_crear_nodo := DB.QueryRow(query, n.Name, n.Type, n.Ip).Scan(&Id_v)
+	if error_db_crear_nodo == nil {
+		n.Id = Id_v
+		go PublicarNodoCreado(n)
+	}
 	return Id_v, error_db_crear_nodo
 }
 
